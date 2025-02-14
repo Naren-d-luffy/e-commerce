@@ -17,7 +17,7 @@ const userValidation = joi.object({
     "string.empty": "Password cannot be empty",
     "any.required": "Password is required",
   }),
-  role: joi.string().valid("buyer", "staff", "admin", "vendor").default("buyer"),
+  role: joi.string().valid("staff", "admin").default("buyer"),
 });
 
 export default userValidation;
