@@ -1,12 +1,18 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import User from "../models/user.model.js";
+import userValidation from "../validators/user.validator.js";
 
 export const registerUser = async (req, res) => {
     const { name, email, password, role } = req.body;
 
     if (!["user", "vendor"].includes(role)) {
         return res.status(400).json({ message: "Invalid role" });
+    }
+
+    const { error } = userValidation.validate(req.body);
+    if (error) {
+      return res.status(400).json({ message: error.details[0].message });
     }
 
     try {
