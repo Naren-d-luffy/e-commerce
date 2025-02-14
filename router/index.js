@@ -1,12 +1,14 @@
 import { Router } from "express";
-import userRouter from "./User/userRouter.js"; 
+// import userRouter from "./User/userRouter.js"; 
+import adminRouter from "./Admin/adminRouter.js"
+
 
 const router = Router();
 
 const defaultRoutes = [
     {
-        path: "/users",
-        route: userRouter
+        path: "/admin",
+        route: adminRouter
     },
 ];
 
