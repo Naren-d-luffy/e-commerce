@@ -1,24 +1,44 @@
 import otpGenerator from "otp-generator";
-import OTPModel from "../models/otp.model.js";
-import User from "../models/user.model.js";
+import OTPModel from "../model/otp.model.js";
+import User from "../model/user.model.js";
+import { sendOTPEmail } from "../utils/emailSender.js";
 
 export const sendOTP = async (req, res) => {
   const { email } = req.body;
   if (!email) {
-    res.status(400).json({ message: "Email is required to send OTP" });
+    return res.status(400).json({ message: "Email is required" });
   }
 
-  const otp = otpGenerator.generate(6, {
-    upperCase: false,
-    specialChars: false,
-  });
+  // const lastOTP = await OTPModel.findOne({ email }).sort({ createdAt: -1 });
+  // if (lastOTP && lastOTP.expiresAt > Date.now() - 60000) {
+  //   return res.status(429).json({ message: "Wait 1 minute before requesting another OTP" });
+  // }
 
-  await OTPModel.create({
-    email,
-    otp,
-    expiresAt: Date.now() + process.env.OTP_EXPIRY,
-  });
-  res.status(200).json({ message: "OTP Sent" });
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+  try {
+    await OTPModel.create({
+      email,
+      otp,
+      expiresAt: Date.now() + 5 * 60 * 1000,
+    });
+console.log(otp);
+
+    res.status(202).json({ message: "OTP is being sent..." });
+
+    setTimeout(async () => {
+      try {
+        await sendOTPEmail(email, otp);
+        console.log(`OTP email sent to ${email}`);
+      } catch (error) {
+        console.error(`Failed to send OTP: ${error.message}`);
+      }
+    }, 0); // Async execution
+
+  } catch (error) {
+    console.error("Database error:", error);
+    res.status(500).json({ message: "Something went wrong. Please try again." });
+  }
 };
 
 export const verifyOTP = async (req, res) => {

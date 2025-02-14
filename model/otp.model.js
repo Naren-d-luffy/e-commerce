@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { sendOTPEmail } from "../utils/emailSender.js";
+import bcrypt from "bcrypt";
 
 const otpSchema = new mongoose.Schema({
     email: { type: String, required: true },
@@ -8,12 +8,10 @@ const otpSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 otpSchema.pre("save", async function (next) {
-    try {
-        await sendOTPEmail(this.email, this.otp); // Call email function
-        next();
-    } catch (error) {
-        next(error); // Pass error to Mongoose
-    }
-});
+    if (!this.isModified("otp")) return next();
+    const salt = await bcrypt.genSalt(10);
+    this.otp = await bcrypt.hash(this.otp, salt);
+    next();
+  });
 
 export default mongoose.model("OTP", otpSchema);
