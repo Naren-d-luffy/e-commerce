@@ -1,6 +1,5 @@
 import Joi from "joi";
 
-// Industrial standard validation for User/Vendor
 const userValidation = Joi.object({
   name: Joi.string().trim().min(3).max(50).regex(/^[a-zA-Z\s]+$/).required().messages({
     "string.pattern.base": "Name must contain only alphabets and spaces",

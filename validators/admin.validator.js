@@ -1,6 +1,5 @@
 import Joi from "joi";
 
-// Industrial standard validation for Admin/Staff
 const adminValidation = Joi.object({
   name: Joi.string()
     .trim()
