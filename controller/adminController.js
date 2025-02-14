@@ -29,7 +29,7 @@ export const createAdmin = async (req, res) => {
 
 export const getAdmins = async (req, res) => {
   try {
-    const admins = await Admin.find();
+    const admins = await Admin.find().select("-password");
     if (!admins.length) {
       return res.status(404).json({ message: "No admins found" });
     }
@@ -47,7 +47,7 @@ export const getAdminById = async (req, res) => {
   }
 
   try {
-    const admin = await Admin.findById(id);
+    const admin = await Admin.findById(id).select("-password");
     if (!admin) {
       return res.status(404).json({ message: "Admin not found" });
     }
