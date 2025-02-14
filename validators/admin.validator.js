@@ -1,23 +1,46 @@
-import joi from "joi";
+import Joi from "joi";
 
-const userValidation = joi.object({
-  name: joi.string().trim().min(3).max(30).required().messages({
-    "string.min": "Name must be at least 3 characters",
-    "string.max": "Name cannot be more than 30 characters",
-    "string.empty": "Name cannot be empty",
-    "any.required": "Name is required",
-  }),
-  email: joi.string().email().required().messages({
-    "string.email": "Please enter a valid email address",
-    "string.empty": "Email cannot be empty",
-    "any.required": "Email is required",
-  }),
-  password: joi.string().min(8).required().messages({
-    "string.min": "Password should have at least 8 characters",
+// Industrial standard validation for Admin/Staff
+const adminValidation = Joi.object({
+  name: Joi.string()
+    .trim()
+    .min(3)
+    .max(50)
+    .regex(/^[a-zA-Z\s]+$/)
+    .required()
+    .messages({
+      "string.pattern.base": "Name must contain only alphabets and spaces",
+      "string.min": "Name must be at least 3 characters",
+      "string.max": "Name cannot be more than 50 characters",
+      "string.empty": "Name cannot be empty",
+      "any.required": "Name is required",
+    }),
+
+  email: Joi.string()
+    .trim()
+    .lowercase()
+    .email({ tlds: { allow: false } })
+    .required()
+    .messages({
+      "string.email": "Please enter a valid email address",
+      "string.empty": "Email cannot be empty",
+      "any.required": "Email is required",
+    }),
+
+  password: Joi.string().min(8).required().messages({
+    "string.min": "Password must be at least 8 characters",
     "string.empty": "Password cannot be empty",
     "any.required": "Password is required",
   }),
-  role: joi.string().valid("staff", "admin").default("buyer"),
+
+  role: Joi.string().valid("admin", "staff").required().messages({
+    "any.only": "Role must be either 'admin' or 'staff'",
+    "any.required": "Role is required",
+  }),
+
+  status: Joi.string().valid("ACTIVE", "INACTIVE").default("ACTIVE").messages({
+    "any.only": "Status must be either 'ACTIVE' or 'INACTIVE'",
+  }),
 });
 
-export default userValidation;
+export default adminValidation;
