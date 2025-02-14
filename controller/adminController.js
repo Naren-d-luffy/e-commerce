@@ -1,11 +1,26 @@
-import adminService from "../service/adminService.js"; 
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+import Admin from "../model/admin.model.js";
+import adminValidation from "../validators/admin.validator.js";
 
-export const createAdminController = async (req, res) => {
+export const createAdmin = async (req, res) => {
   try {
     const adminData = req.body;
-    if (!["admin"].includes(adminData.role)) return res.status(400).json({ message: "Invalid Role" });
-    
-    const newAdmin = await adminService.createAdmin(adminData);
+    if (!["admin","staff"].includes(adminData.role)) return res.status(400).json({ message: "Invalid Role" });
+
+    const { error } = adminValidation.validate(adminData);
+    if (error) {
+      return res.status(400).json({ message: error.details[0].message });
+    }
+
+    const hashedPassword = await bcrypt.hash(adminData.password, 10);
+    const admin = new Admin({
+      ...adminData,
+      password: hashedPassword,
+      status: adminData.status || "ACTIVE",
+    });
+
+    const newAdmin = await admin.save();
     res.status(201).json({ message: "Admin created successfully", data: newAdmin });
   } catch (error) {
     res.status(500).json({ error: "Error Creating Admin", message: error.message });
@@ -14,7 +29,7 @@ export const createAdminController = async (req, res) => {
 
 export const getAdmins = async (req, res) => {
   try {
-    const admins = await adminService.getAllAdmin();
+    const admins = await Admin.find();
     if (!admins.length) {
       return res.status(404).json({ message: "No admins found" });
     }
@@ -32,7 +47,7 @@ export const getAdminById = async (req, res) => {
   }
 
   try {
-    const admin = await adminService.getAdminById(id);
+    const admin = await Admin.findById(id);
     if (!admin) {
       return res.status(404).json({ message: "Admin not found" });
     }
@@ -45,9 +60,24 @@ export const getAdminById = async (req, res) => {
 export const loginAdmin = async (req, res) => {
   try {
     const { email, password } = req.body;
-    const { accessToken, refreshToken, admin } = await adminService.validateAdmin(email, password);
-    res.status(200).json({ message: "Login Successful", accessToken, refreshToken, admin });
+    const admin = await Admin.findOne({ email });
+
+    if (!admin) return res.status(404).json({ message: "User Not Found" });
+
+    if (admin.status === "INACTIVE") {
+      return res.status(403).json({ message: "Account Inactive. Contact Admin." });
+    }
+
+    const isMatch = await bcrypt.compare(password, admin.password);
+    if (!isMatch) return res.status(401).json({ message: "Invalid Password" });
+
+    const payload = { id: admin.id, status: admin.status };
+    const accessToken = jwt.sign(payload, process.env.ACCESS_SECRET, { expiresIn: "15m" });
+    const refreshToken = jwt.sign(payload, process.env.REFRESH_SECRET, { expiresIn: "7d" });
+
+    const { password: _, ...safeAdminData } = admin.toObject();
+    res.status(200).json({ message: "Login Successful", accessToken, refreshToken, admin: safeAdminData });
   } catch (error) {
-    res.status(401).json({ error: "Invalid Email or Password", message: error.message });
+    res.status(500).json({ error: "Login Failed", message: error.message });
   }
 };
