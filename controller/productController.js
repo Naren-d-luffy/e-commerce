@@ -23,9 +23,19 @@ export const createProduct = async (req, res) => {
         .status(400)
         .json({ errors: error.details.map((err) => err.message) });
     }
+    
+    const { scheduledStartDate } = req.body;
+
+    if (!scheduledStartDate || isNaN(new Date(scheduledStartDate))) {
+      return res.status(400).json({ message: "Invalid scheduledStartDate" });
+    }
+
+    const expiryDate = new Date(scheduledStartDate);
+    expiryDate.setDate(expiryDate.getDate() + 7);
 
     const newProduct = new Product({
       ...req.body,
+      expiryDate: expiryDate,
       createdBy: userId,
       vendorId: userId,
     });
@@ -100,38 +110,38 @@ export const updateProduct = async (req, res) => {
       return res.status(404).json({ message: "Product not found" });
     }
 
-    if (
-      role === "vendor" &&
-      product.vendorId.toString() !== userId.toString()
-    ) {
-      return res
-        .status(403)
-        .json({
+    if (role === "vendor") {
+      if (!product.vendorId || product.vendorId.toString() !== userId.toString()) {
+        return res.status(403).json({
           message: "Unauthorized: You can only update your own products",
         });
-    }
-
-    const { error } = productValidation.validate(req.body, {
-      abortEarly: false,
-    });
-    if (error) {
-      return res
-        .status(400)
-        .json({ errors: error.details.map((err) => err.message) });
-    }
-
-    const updatedProduct = await Product.findByIdAndUpdate(
-      productId,
-      req.body,
-      { new: true }
-    );
-
-    res
-      .status(200)
-      .json({
-        message: "Product updated successfully",
-        product: updatedProduct,
+      }
+    } else if (!["admin", "staff"].includes(role)) {
+      return res.status(403).json({
+        message: "Unauthorized: Only vendor, staff, or admin can update products",
       });
+    }
+
+    const { error } = productValidation.validate(req.body, { abortEarly: false });
+    if (error) {
+      return res.status(400).json({ errors: error.details.map((err) => err.message) });
+    }
+
+    let updateData = { ...req.body };
+    if (req.body.scheduledStartDate) {
+      const scheduledStartDate = new Date(req.body.scheduledStartDate);
+      if (isNaN(scheduledStartDate)) {
+        return res.status(400).json({ message: "Invalid scheduledStartDate" });
+      }
+      updateData.expiryDate = new Date(scheduledStartDate);
+      updateData.expiryDate.setDate(updateData.expiryDate.getDate() + 7);
+    }
+
+    const updatedProduct = await Product.findByIdAndUpdate(productId, updateData, {
+      new: true,
+    });
+
+    res.status(200).json({ message: "Product updated successfully", product: updatedProduct });
   } catch (err) {
     res.status(500).json({ message: "Server error", error: err.message });
   }
