@@ -35,12 +35,6 @@ const productValidation = Joi.object({
     "any.required": "Scheduled start date is required",
   }),
 
-  expiryDate: Joi.date().greater(Joi.ref("scheduledStartDate")).required().messages({
-    "date.greater": "Expiry date must be after the scheduled start date",
-    "date.base": "Expiry date must be a valid date",
-    "any.required": "Expiry date is required",
-  }),
-
   oldPrice: Joi.number().positive().required().messages({
     "number.base": "Old price must be a number",
     "number.positive": "Old price must be greater than 0",
@@ -83,14 +77,6 @@ const productValidation = Joi.object({
 
   isDeleted: Joi.boolean().default(false).messages({
     "boolean.base": "isDeleted must be true or false",
-  }),
-
-  createdBy: Joi.string().custom(objectId).required().messages({
-    "any.required": "Created by user ID is required",
-  }),
-
-  vendorId: Joi.string().custom(objectId).required().messages({
-    "any.required": "Vendor ID is required",
   }),
 
   ratings: Joi.object({

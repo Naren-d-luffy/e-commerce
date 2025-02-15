@@ -1,3 +1,4 @@
+import bcrypt from "bcrypt";
 import OTPModel from "../model/otp.model.js";
 import User from "../model/user.model.js";
 import { sendOTPEmail } from "../utils/emailSender.js";
@@ -42,14 +43,21 @@ console.log(otp);
 
 export const verifyOTP = async (req, res) => {
   const { email, otp } = req.body;
-  const validOTP = await OTPModel.findOne({ email, otp });
+  const validOTP = await OTPModel.findOne({ email });
 
-  if (!validOTP || validOTP.expiresAt < Date.now())
-    return res.status(400).json({ message: "Invalid OTP" });
+  if (!validOTP) return res.status(400).json({ message: "Invalid OTP" });
+
+  if (validOTP.expiresAt < Date.now()) {
+    await OTPModel.deleteOne({ email });
+    return res.status(400).json({ message: "OTP Expired" });
+  }
+
+  const isMatch = await bcrypt.compare(otp, validOTP.otp);
+  if (!isMatch) return res.status(400).json({ message: "Invalid OTP" });
 
   await User.updateOne({ email }, { verified: true });
 
-  await OTPModel.deleteOne({ email, otp });
+  await OTPModel.deleteOne({ email });
 
   res.status(201).json({ message: "OTP Verified and deleted" });
 };
