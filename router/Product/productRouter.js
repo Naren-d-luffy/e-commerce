@@ -7,15 +7,15 @@ import {
   softDeleteProduct,
   deleteProductPermanently,
 } from "../../controller/productController.js";
-import authenticate from "../../middleware/authMiddleware.js";
+import {verifyToken} from "../../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-router.post("/", authenticate, createProduct); 
-router.get("/", authenticate, getAllProducts); 
-router.get("/:productId", authenticate, getProductById); 
-router.put("/:productId", authenticate, updateProduct);
-router.patch("/soft-delete/:productId", authenticate, softDeleteProduct);
-router.delete("/:productId", authenticate, deleteProductPermanently);
+router.post("/", verifyToken, createProduct); 
+router.get("/", verifyToken, getAllProducts); 
+router.get("/:productId", verifyToken, getProductById); 
+router.put("/:productId", verifyToken, updateProduct);
+router.patch("/soft-delete/:productId", verifyToken, softDeleteProduct);
+router.delete("/:productId", verifyToken, deleteProductPermanently);
 
 export default router;

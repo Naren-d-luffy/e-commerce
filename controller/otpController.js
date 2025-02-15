@@ -1,4 +1,3 @@
-import otpGenerator from "otp-generator";
 import OTPModel from "../model/otp.model.js";
 import User from "../model/user.model.js";
 import { sendOTPEmail } from "../utils/emailSender.js";
@@ -9,10 +8,10 @@ export const sendOTP = async (req, res) => {
     return res.status(400).json({ message: "Email is required" });
   }
 
-  // const lastOTP = await OTPModel.findOne({ email }).sort({ createdAt: -1 });
-  // if (lastOTP && lastOTP.expiresAt > Date.now() - 60000) {
-  //   return res.status(429).json({ message: "Wait 1 minute before requesting another OTP" });
-  // }
+  const lastOTP = await OTPModel.findOne({ email }).sort({ createdAt: -1 });
+  if (lastOTP && lastOTP.expiresAt > Date.now() - 60000) {
+    return res.status(429).json({ message: "Wait 1 minute before requesting another OTP" });
+  }
 
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
@@ -33,7 +32,7 @@ console.log(otp);
       } catch (error) {
         console.error(`Failed to send OTP: ${error.message}`);
       }
-    }, 0); // Async execution
+    }, 0);
 
   } catch (error) {
     console.error("Database error:", error);
