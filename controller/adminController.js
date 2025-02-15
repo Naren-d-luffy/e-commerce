@@ -85,8 +85,8 @@ export const loginAdmin = async (req, res) => {
 export const changeStatus = async (req, res) => {
   try {
     if (req.user.role !== "admin") return res.status(403).json({ message: "Access Denied. Admins only." });
-
-    const { adminId, status } = req.body;
+    const {adminId} = req.params;
+    const { status } = req.body;
 
     if (!["ACTIVE", "INACTIVE"].includes(status)) {
       return res.status(400).json({ message: "Invalid status" });
