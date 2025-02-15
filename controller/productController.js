@@ -204,3 +204,29 @@ export const deleteProductPermanently = async (req, res) => {
     res.status(500).json({ message: "Server error", error: err.message });
   }
 };
+
+export const addReview = async (req, res) => {
+  const { productId } = req.params;
+  const { rating, comment } = req.body;
+  const userId = req.user.id;
+
+  try {
+      const product = await Product.findById(productId);
+      if (!product) {
+          return res.status(404).json({ message: "Product not found" });
+      }
+
+      const newReview = { user: userId, rating, comment };
+
+      product.ratings.reviews.push(newReview);
+      product.ratings.totalReviews = product.ratings.reviews.length;
+      product.ratings.average =
+          product.ratings.reviews.reduce((acc, rev) => acc + rev.rating, 0) / product.ratings.totalReviews;
+
+      await product.save();
+
+      res.status(201).json({ message: "Review added successfully", product });
+  } catch (error) {
+      res.status(500).json({ message: error.message });
+  }
+};

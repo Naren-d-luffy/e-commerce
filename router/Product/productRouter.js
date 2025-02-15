@@ -6,6 +6,7 @@ import {
   updateProduct,
   softDeleteProduct,
   deleteProductPermanently,
+  addReview
 } from "../../controller/productController.js";
 import {verifyToken} from "../../middleware/authMiddleware.js";
 
@@ -17,5 +18,6 @@ router.get("/:productId", verifyToken, getProductById);
 router.put("/:productId", verifyToken, updateProduct);
 router.patch("/soft-delete/:productId", verifyToken, softDeleteProduct);
 router.delete("/:productId", verifyToken, deleteProductPermanently);
+router.post("/review/:productId", verifyToken, addReview);
 
 export default router;
