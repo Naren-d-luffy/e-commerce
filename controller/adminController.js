@@ -81,3 +81,39 @@ export const loginAdmin = async (req, res) => {
     res.status(500).json({ error: "Login Failed", message: error.message });
   }
 };
+
+export const changeStatus = async (req, res) => {
+  try {
+    if (req.user.role !== "admin") return res.status(403).json({ message: "Access Denied. Admins only." });
+
+    const { adminId, status } = req.body;
+
+    if (!["ACTIVE", "INACTIVE"].includes(status)) {
+      return res.status(400).json({ message: "Invalid status" });
+    }
+
+    const updatedAdmin = await Admin.findByIdAndUpdate(adminId, { status }, { new: true });
+
+    if (!updatedAdmin) return res.status(404).json({ message: "Admin not found" });
+
+    res.status(200).json({ message: `Admin status updated to ${status}` });
+  } catch (error) {
+    res.status(500).json({ error: "Error Changing Status", message: error.message });
+  }
+};
+
+export const deleteAdmin = async (req, res) => {
+  try {
+    if (req.user.role !== "admin") return res.status(403).json({ message: "Access Denied. Admins only." });
+
+    const { adminId } = req.params;
+
+    const deletedAdmin = await Admin.findByIdAndDelete(adminId);
+
+    if (!deletedAdmin) return res.status(404).json({ message: "Admin not found" });
+
+    res.status(200).json({ message: "Admin deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ error: "Error Deleting Admin", message: error.message });
+  }
+};
