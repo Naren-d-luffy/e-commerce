@@ -48,5 +48,8 @@ export const verifyOTP = async (req, res) => {
     return res.status(400).json({ message: "Invalid OTP" });
 
   await User.updateOne({ email }, { verified: true });
-  res.status(201).json({ message: "OTP Verified" });
+
+  await OTPModel.deleteOne({ email, otp });
+
+  res.status(201).json({ message: "OTP Verified and deleted" });
 };

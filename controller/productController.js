@@ -40,17 +40,36 @@ export const createProduct = async (req, res) => {
 };
 
 export const getAllProducts = async (req, res) => {
-  try {
-    const products = await Product.find({ isDeleted: false }).populate(
-      "vendorId",
-      "name email"
-    );
-
-    res.status(200).json(products);
-  } catch (err) {
-    res.status(500).json({ message: "Server error", error: err.message });
-  }
-};
+    try {
+      let { page, limit } = req.query;
+  
+      page = parseInt(page, 10) || 1; 
+      limit = parseInt(limit, 10) || 10; 
+  
+      if (page < 1 || limit < 1) {
+        return res.status(400).json({ message: "Invalid pagination parameters" });
+      }
+  
+      const totalProducts = await Product.countDocuments({ isDeleted: false });
+      const totalPages = Math.ceil(totalProducts / limit);
+  
+      const products = await Product.find({ isDeleted: false })
+        .populate("vendorId", "name email")
+        .skip((page - 1) * limit)
+        .limit(limit);
+  
+      res.status(200).json({
+        totalProducts,
+        totalPages,
+        currentPage: page,
+        pageSize: limit,
+        products,
+      });
+  
+    } catch (err) {
+      res.status(500).json({ message: "Server error", error: err.message });
+    }
+  };  
 
 export const getProductById = async (req, res) => {
   try {
